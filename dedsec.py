@@ -1,6 +1,7 @@
 import threading, time, os, requests, urllib3, click, random
 from fake_useragent import UserAgent
 
+# This is the skull to make the main menu look cool
 skull = '''             
        *1▒g▒#▒$▒▒1▒,Q        
       ▒▒▒▒▒▒▒▒▓▒▒▒▒▒         
@@ -35,25 +36,23 @@ best_quotes_from_anonymous = [' - Your Ignorance Is Their Power \n   Learn And U
                               ' - But we are hackers and hackers have black terminals with "Green font colors".',
                               ' - Old Hackers never Die. They just go to Bitnet.']
 
-def ping(ui): # This function is to allow the user to ping a website multiple times to get some info about the connection
-    ui = ui[5:].lower().split(' ')
-    the_url = ui[0]
-    ui.pop(0)
-    
-    global ping_syntax
-    ping_syntax = '''
+def ping(): # This function is to allow the user to ping a website multiple times to get some info about the connection
+    global ui
+    ui = ui.lower().split(' ')
+    try:
+        the_url = ui[1]
+    except:
+        ping_syntax = '''
     -f : How many times to test connection speed (Default 6)
     -p : Which Specific port to run the website on (Default is... idk lmao)
     -t : Timeout on loading the website (Default is None, idk why but this sometimes does not work)
     -r : Apply when you want to use random headers for connecting (hide your identity)
     '''
-
-    if the_url.strip(' ') == 'help':
         print(ping_syntax)
         return
 
-    ua = UserAgent() # Create the fake user-agent object
-
+    ui.pop(0)
+    print(f"Pinging \"http://{the_url}\"", end='')
     # po = ping options
     po = {'-f': 6, 
           '-p': '',
@@ -69,9 +68,8 @@ def ping(ui): # This function is to allow the user to ping a website multiple ti
                     print(f'Error: Please enter a number for the port\n[{ui[ui.index(j) + 1]}] is not a valid port number')
                     return
             else:
+                ua = UserAgent() # Create the fake user-agent object
                 po.update({j:{'User-Agent': f'{ua.random}'}})
-
-    print(f"Pinging \"http://{the_url}\"", end='')
 
     if po['-p'] != '':
         print(f' on port {po["-p"]}', end='')
@@ -101,13 +99,30 @@ def ping(ui): # This function is to allow the user to ping a website multiple ti
     except urllib3.exceptions.LocationParseError:
         print('\nError: URL parsing error')
 
-def echo(ui): # Print what ever the user inputted
+def echo(): # Print what ever the user inputted
+    global ui
     if len(ui) == 4:
-        print('ECHO is working!')
-    else:
-        print(ui[5:])
+        echo_usage = '''
+        #   Usage:                   Command:
+        1.  echo a message:          echo "information to display"
+        2.  write data to a file:    echo "information to write" >> "filename"
+        '''
+        print(echo_usage)
+        return
 
-def cd(ui): # Changes the working directory of the program
+    ui = ui.replace('echo ','',1)
+    ui_list = ui.split(' ')
+    if '>>' in ui_list:
+        ui = ui.split(' >> ')
+        with open(ui[1],'a+') as ff:
+            ff.write(ui[0])
+            print('Data has been written to file')
+
+    else:
+        print(ui)
+
+def cd(): # Changes the working directory of the program
+    global ui
     ui = ui.strip(' ').split(' ', 1)
     if len(ui) == 2:
         try:
@@ -120,30 +135,30 @@ def cd(ui): # Changes the working directory of the program
     
     print(f'Current Working Directory:\n{os.getcwd()}')
 
-def input_checker(ui):
-    x = ui.split(' ')[0]
-    if ui == '':
-        print(f'Anonymous Quote:\n\n{random.choice(best_quotes_from_anonymous)}')
-
-    elif x == 'ping':
-        ping(ui)
-
-    elif x == 'echo':
-        echo(ui)
-
-    elif x == 'cd':
-        cd(ui)
-
-    else:
-        print('\nError: Unkown Command')
+# How to add new Commands
+# add new functions to the shell, write the function name in the "value" of the dictionary named "commands"
+# and the keyword the user would use to call the funciton, in the "keys" of the dictionary named "commands"
+commands = {
+    'ping':ping,
+    'echo':echo,
+    'cd':cd,
+    }
 
 if __name__ == "__main__": # The main process
     try:
-        user_input = 'echo                      Welcome to DedSec Shell'
+        global ui
+        ui = 'echo                      Welcome to DedSec Shell' # Display a default message
+
         while True:
             click.clear() # Clear the console view
             print(skull)
-            input_checker(user_input)
-            user_input = input(f'\n\n                           >DEDSEC:/ ')
+
+            x = ui.split(' ')[0]
+            if x in commands.keys():
+                commands[x]()
+            else:
+                print('Error: Unkown Command')
+
+            ui = input(f'\n\n                           >DEDSEC:/ ')
     except KeyboardInterrupt:
         os._exit(0)
