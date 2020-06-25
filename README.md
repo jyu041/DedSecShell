@@ -26,5 +26,9 @@ I am truly sorry if this stuff looks stupid, but it is the video game that inspi
 - basic of **echo** (print a message entered by user in the terminal)
 - basic of **ping** (get the time it takes to load a website url)
 - basic of **cd** (change directory)
+- basic of **mkdir** (create directory)
+- basic of **rm** (remove files/directory)
+- basic of **ls** (list the files in current working dicrectory)
+- basic of **cp** (copy files)
 
 - If the user presses enter on their keyboard with no other input, the program would give a random hacker movitation quote from http://infosecurity24.blogspot.com/p/blog-page_26.html
