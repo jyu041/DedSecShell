@@ -260,7 +260,25 @@ def _cp():
                 print(f'Fatal Error: {e}')
 
 def _mv():
-    print('Current Function not yet developed')
+    global ui
+    ui = ui.strip(' ').replace('mv ','',1)
+    if ui == 'mv':
+        print('You need to enter a directory name or file name!')
+    else:
+        ui = shlex.split(ui)
+        try:
+            src = ui[0].strip(' ').strip('"')
+            dst = ui[1].strip(' ').strip('"')
+        except:
+            print('Please enter the command correctly!')
+        
+        else:
+            try:
+                print(f'Starting: Moving [{src}] to [{dst}]')
+                shutil.move(src, dst)
+                print(f'Finished: Moved  [{src}] to [{dst}]')
+            except Exception as e:
+                print(f'Fatal Error: {e}')
 
 # How to add new Commands:
 # add new functions to the shell, write the function name in the "value" of the dictionary named "commands"
