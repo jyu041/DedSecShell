@@ -1,5 +1,11 @@
-import threading, time, os, requests, urllib3, click, random
+# Most of these modules are included when you install python
+import threading, time, os, click, random, shutil
+
+# Thes modules require a pip install
 from fake_useragent import UserAgent
+import requests, urllib3, shlex
+
+ui = 'echo                      Welcome to DedSec Shell' # Display a default message
 
 # This is the skull to make the main menu look cool
 skull = '''             
@@ -36,7 +42,7 @@ best_quotes_from_anonymous = [' - Your Ignorance Is Their Power \n   Learn And U
                               ' - But we are hackers and hackers have black terminals with "Green font colors".',
                               ' - Old Hackers never Die. They just go to Bitnet.']
 
-def ping(): # This function is to allow the user to ping a website multiple times to get some info about the connection
+def _ping(): # This function is to allow the user to ping a website multiple times to get some info about the connection
     global ui
     ui = ui.lower().split(' ')
     try:
@@ -99,7 +105,7 @@ def ping(): # This function is to allow the user to ping a website multiple time
     except urllib3.exceptions.LocationParseError:
         print('\nError: URL parsing error')
 
-def echo(): # Print what ever the user inputted
+def _echo(): # Print what ever the user inputted
     global ui
     if len(ui) == 4:
         echo_usage = '''
@@ -115,13 +121,13 @@ def echo(): # Print what ever the user inputted
     if '>>' in ui_list:
         ui = ui.split(' >> ')
         with open(ui[1],'a+') as ff:
-            ff.write(ui[0])
+            ff.write(f'{ui[0]}\n')
             print('Data has been written to file')
 
     else:
         print(ui)
 
-def cd(): # Changes the working directory of the program
+def _cd(): # Changes the working directory of the program
     global ui
     ui = ui.strip(' ').split(' ', 1)
     if len(ui) == 2:
@@ -135,30 +141,164 @@ def cd(): # Changes the working directory of the program
     
     print(f'Current Working Directory:\n{os.getcwd()}')
 
-# How to add new Commands
+def _help():
+    help_data = f'''
+    Welcome to Dedsec Shell, This is a terminal coded in python to emulate 
+    some features of various shells and terminals from different systems.
+    It is an incomplete and always improving "shell". The name is called 
+    Dedsec Shell because it's theme was inspired by the hacking video game
+    named "watch_dogs" by Ubisoft.
+    '''
+    print(help_data)
+    print('#.   Command:        Usage;')
+    for indx, possible_cmd in enumerate(commands.keys()):
+        print(f'{indx + 1}.{" " * (4 - len(str(indx + 1)))}{possible_cmd}{" " * (16 - len(possible_cmd))}{commands[possible_cmd][1]}')
+
+def _mkdir():
+    global ui
+    ui = ui.strip(' ').replace('mkdir ','',1)
+
+    if ui == 'mkdir':
+        print('You need to enter a name for a directory!')
+
+    elif os.path.isdir(f'{ui}') == True:
+        print('This directory already exists, cannot create it again!')
+
+    else:
+        os.mkdir(ui)
+        print('Created directory')
+
+def _rm():
+    global ui
+    ui = ui.strip(' ').replace('rm ','',1)
+    rm_syntax = '''
+    The command : "rm" is a power to remove files and directories
+    to recursively remove a directory, add "-r" to the command like this:
+    rm [directory to delete] -r
+
+    Basic Usage:
+    rm [file/directory to remove]
+    '''
+    if ui == 'rm':
+        print(rm_syntax)
+    else:
+        temp = shlex.split(ui)
+        if os.path.isdir(temp[0]) == True:
+            if '-r' in temp:
+                shutil.rmtree(temp[0])
+            else:
+                try:
+                    os.rmdir(temp[0])
+                except:
+                    print(f'Directory [{temp[0]}] is not empty!')
+                    return
+        else:
+            try:
+                os.unlink(temp[0])
+            except FileNotFoundError:
+                print('No such file or folder found!')
+                return
+
+        print(f'Successfully removed "{temp[0]}"')
+
+def _ls():
+    all_files = os.listdir()
+    # This function below is to convert bytes into bigger and easier to read units
+    def human(size):
+        B = " B"
+        KB = "KB" 
+        MB = "MB"
+        GB = "GB"
+        TB = "TB"
+        UNITS = [B, KB, MB, GB, TB]
+        HUMANFMT = '%f %s %s'
+        HUMANRADIX = 1024.
+        for u in UNITS[:-1]:
+            if size < HUMANRADIX : return HUMANFMT % (size, " " * (18 - (len(str(size).split('.')[0]) + 7)), u)
+            size /= HUMANRADIX
+
+        return HUMANFMT % (size, " " * (18 - (len(str(size).split('.')[0]) + 7)), UNITS[-1])
+    # C:\Users\jerry\Desktop
+    print('        Size:' + " " * 12 + "Unit:" + " " * 18 + 'Name:')
+    for i_file in all_files:
+        r_size = str(human(os.lstat(i_file).st_size))
+        f_size = r_size + " " * (40 - len(str(r_size)))
+        if len('<DIR>   ' + f_size + i_file) > 90:
+            if os.path.isdir(i_file) == True:
+                print(str('<DIR>   ' + f_size + i_file)[:90] + '...')
+            else:
+                print(str('        ' + f_size + i_file)[:90] + '...')
+        else:
+            if os.path.isdir(i_file) == True:
+                print('<DIR>   ' + f_size + i_file)
+            else:
+                print('        ' + f_size + i_file)
+
+def _cp():
+    global ui
+    ui = ui.strip(' ').replace('cp ','',1)
+    if ui == 'cp':
+        print('You need to enter a directory name or file name!')
+    else:
+        ui = shlex.split(ui)
+        try:
+            src = ui[0].strip(' ').strip('"')
+            dst = ui[1].strip(' ').strip('"')
+        except:
+            print('Please enter the command correctly!')
+
+        else:
+            try:
+                print(f'Starting: Copying [{src}] to [{dst}]')
+                if os.path.isdir(src):
+                    shutil.copytree(src, dst)
+                else:
+                    shutil.copy(src, dst)
+
+                print(f'Finished: Copied  [{src}] to [{dst}]')
+            except Exception as e:
+                print(f'Fatal Error: {e}')
+
+def _mv():
+    print('Current Function not yet developed')
+
+# How to add new Commands:
 # add new functions to the shell, write the function name in the "value" of the dictionary named "commands"
 # and the keyword the user would use to call the funciton, in the "keys" of the dictionary named "commands"
+# Please add a description in the second spot for the list of values"
 commands = {
-    'ping':ping,
-    'echo':echo,
-    'cd':cd,
+    'ping': [_ping,   'Ping an IP for the request time'],
+    'echo': [_echo,   'Print a message the user enters or write data to a file'],
+    'cd':   [_cd,     'Changes working directory or display current directory'],
+    'help': [_help,   'Display this message'],
+    'mkdir':[_mkdir,  'Create a directory/folder with name of user input'],
+    'rm':   [_rm,     'Remove a file or a directory'],
+    'ls':   [_ls,     'List all files in current working directory'],
+    'cp':   [_cp,     'Copy a file or a directory to a target location'],
+    'mv':   [_mv,     'Move a file from one place to another']
     }
 
-if __name__ == "__main__": # The main process
-    try:
-        global ui
-        ui = 'echo                      Welcome to DedSec Shell' # Display a default message
+def input_checker():
+    global ui
+    long_ui = ui.split(' && ')
 
-        while True:
-            click.clear() # Clear the console view
-            print(skull)
-
-            x = ui.split(' ')[0]
-            if x in commands.keys():
-                commands[x]()
+    for one_ui in long_ui:
+        ui = one_ui
+        x = ui.split(' ')[0]
+        if x in commands.keys():
+            commands[x][0]()
+        else:
+            if len(ui) == 0:
+                print(random.choice(best_quotes_from_anonymous))
             else:
                 print('Error: Unkown Command')
 
+if __name__ == "__main__": # The main process
+    try:
+        while True:
+            click.clear() # Clear the console view
+            print(skull)  # Prints the cool title screen thing
+            input_checker()
             ui = input(f'\n\n                           >DEDSEC:/ ')
     except KeyboardInterrupt:
         os._exit(0)
